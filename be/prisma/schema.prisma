@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -11,4 +5,124 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+
+model User {
+  id       String @id @default(uuid())
+  email    String @unique
+  username String @unique
+  password String
+
+  // Thống kê tổng quan
+  winCount  Int @default(0)
+  lossCount Int @default(0)
+  drawCount Int @default(0)
+
+  // Quan hệ
+  roomsHosted   Room[]         @relation("RoomHost")
+  playerInRooms PlayerInRoom[]
+
+  createdAt DateTime @default(now())
+}
+
+/// Phòng chơi giống concept "Room" trong README (gần giống Kahoot session)
+model Room {
+  id   String @id @default(uuid())
+  code String @unique // roomCode để người chơi nhập
+  hostId String
+  host   User   @relation("RoomHost", fields: [hostId], references: [id])
+  codeLength Int // độ dài mật mã: 3–6
+  status     RoomStatus @default(WAITING)
+
+  currentTurn  PlayerRole? // PLAYER_1 / PLAYER_2
+  currentRound Int         @default(1) // 1..10
+  turnStartedAt DateTime?
+
+  endReason RoomEndReason?
+  winnerRole PlayerRole?
+
+  createdAt  DateTime  @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  players PlayerInRoom[]
+  guesses Guess[]
+
+  @@index([code])
+  @@index([status])
+  @@index([status, currentTurn])
+  @@index([finishedAt])
+  @@index([winnerRole])
+}
+
+
+model PlayerInRoom {
+  id String @id @default(uuid())
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id])
+
+  userId String? 
+  user   User?   @relation(fields: [userId], references: [id])
+
+  nickname String
+  role     PlayerRole 
+
+  secretCode String? 
+  missCount  Int     @default(0) 
+
+  createdAt DateTime @default(now())
+
+  guesses Guess[]
+
+  @@unique([roomId, role])
+  @@index([roomId])
+  @@index([userId])
+}
+
+model Guess {
+  id String @id @default(uuid())
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id])
+
+  playerInRoomId String
+  playerInRoom   PlayerInRoom @relation(fields: [playerInRoomId], references: [id])
+
+  roundIndex Int
+
+  turnIndex Int
+
+  guessValue       String 
+  correctDigits    Int
+  correctPositions Int
+
+  createdAt DateTime @default(now())
+
+  @@index([roomId])
+  @@index([playerInRoomId])
+  @@index([roomId, createdAt])
+}
+
+
+enum RoomStatus {
+  WAITING 
+  SETTING_SECRET 
+  PLAYING 
+  FINISHED 
+}
+
+
+enum RoomEndReason {
+  FULL_CODE_WIN 
+  MISS_LIMIT 
+  MAX_ROUNDS_TIE 
+  ABANDONED 
+}
+
+
+enum PlayerRole {
+  PLAYER_1
+  PLAYER_2
 }

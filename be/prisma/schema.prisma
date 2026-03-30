@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 
@@ -32,7 +32,7 @@ model Room {
   code String @unique // roomCode để người chơi nhập
   hostId String
   host   User   @relation("RoomHost", fields: [hostId], references: [id])
-  codeLength Int // độ dài mật mã: 3–6
+  codeLength Int 
   status     RoomStatus @default(WAITING)
 
   currentTurn  PlayerRole? // PLAYER_1 / PLAYER_2

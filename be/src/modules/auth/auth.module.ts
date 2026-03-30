@@ -12,7 +12,8 @@ import { PrismaModule } from '../../prisma.module';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET as string,
-      signOptions: { expiresIn: parseInt(process.env.JWT_EXPIRES_IN as string) },
+      // JWT standard accepts duration strings like "7d" (jsonwebtoken).
+      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN as any },
     }),
   ],
   controllers: [AuthController],

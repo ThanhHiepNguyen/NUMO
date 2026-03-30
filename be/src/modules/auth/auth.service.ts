@@ -12,7 +12,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async register(email: string, password: string, username: string) {
     // Check email đã tồn tại chưa
@@ -53,10 +53,11 @@ export class AuthService {
       },
     });
 
-    return {
-      message: 'Đăng ký thành công',
-      user,
-    };
+    
+    const payload = { sub: user.id };
+    const accessToken = this.jwtService.sign(payload);
+
+    return { accessToken };
   }
 
   async login(email: string, password: string) {
@@ -76,19 +77,11 @@ export class AuthService {
       throw new UnauthorizedException('Email hoặc password không đúng');
     }
 
-    // Tạo JWT token
-    const payload = { sub: user.id, email: user.email, username: user.username };
+    // Standard JWT payload: only `sub` (subject = user id).
+    const payload = { sub: user.id };
     const accessToken = this.jwtService.sign(payload);
 
-    return {
-      message: 'Đăng nhập thành công',
-      accessToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-      },
-    };
+    return { accessToken };
   }
 
   async validateUser(userId: string) {

@@ -6,6 +6,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JoinRoomDto } from './dto/join-room.dto';
 import { LeaveRoomDto } from './dto/leave-room.dto';
 import { SetSecretDto } from './dto/set-secret.dto';
+import { GuessDto } from './dto/guess.dto';
 
 @Controller('rooms')
 export class RoomsController {
@@ -45,6 +46,20 @@ export class RoomsController {
     @Body() setSecretDto: SetSecretDto,
   ) {
     return this.roomsService.setSecret(code, playerId, setSecretDto.secretCode);
+  }
+
+  @Post(':code/players/:playerId/guess')
+  guess(
+    @Param('code') code: string,
+    @Param('playerId') playerId: string,
+    @Body() guessDto: GuessDto,
+  ) {
+    return this.roomsService.guess(code, playerId, guessDto.guessValue);
+  }
+
+  @Get(':code/state')
+  getState(@Param('code') code: string) {
+    return this.roomsService.getRoomState(code);
   }
 
 }

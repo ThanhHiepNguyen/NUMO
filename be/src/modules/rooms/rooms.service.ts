@@ -11,59 +11,13 @@ export class RoomsService {
     private readonly ablyService: AblyService,
   ) { }
 
-  async getRoomByCode(roomCode: string) {
-    const code = roomCode.trim();
-    if (!code) {
-      throw new BadRequestException('Mã phòng không được để trống');
-    }
-
-    const room = await this.prisma.room.findUnique({
-      where: { code },
-      select: {
-        id: true,
-        code: true,
-        codeLength: true,
-        status: true,
-        hostId: true,
-        currentTurn: true,
-        currentRound: true,
-        turnStartedAt: true,
-        endReason: true,
-        winnerRole: true,
-        createdAt: true,
-        startedAt: true,
-        finishedAt: true,
-        players: {
-          select: {
-            id: true,
-            userId: true,
-            nickname: true,
-            role: true,
-            missCount: true,
-            createdAt: true,
-          },
-          orderBy: { createdAt: 'asc' },
-        },
-      },
-    });
-
-    if (!room) {
-      throw new NotFoundException('Không tìm thấy phòng');
-    }
-
-    return {
-      message: 'Lấy thông tin phòng thành công',
-      data: room,
-    };
-  }
-
   async getRoomState(roomCode: string) {
     const code = roomCode.trim();
     if (!code) {
       throw new BadRequestException('Mã phòng không được để trống');
     }
 
-    const room = await this.prisma.room.findUnique({
+    let room = await this.prisma.room.findUnique({
       where: { code },
       select: {
         id: true,
@@ -88,6 +42,7 @@ export class RoomsService {
           select: {
             id: true,
             playerInRoomId: true,
+            guessValue: true,
             roundIndex: true,
             turnIndex: true,
             correctDigits: true,
@@ -99,6 +54,115 @@ export class RoomsService {
         },
       },
     });
+
+    if (!room) {
+      throw new NotFoundException('Không tìm thấy phòng');
+    }
+
+
+    if (room.status === 'PLAYING' && room.currentTurn && room.turnStartedAt) {
+      const now = new Date();
+      const diffMs = now.getTime() - room.turnStartedAt.getTime();
+      const timeoutMs = 2 * 60 * 1000;
+
+      if (diffMs > timeoutMs) {
+        await this.prisma.$transaction(async (tx) => {
+          const liveRoom = await tx.room.findUnique({
+            where: { id: room!.id },
+            select: {
+              id: true,
+              code: true,
+              status: true,
+              currentTurn: true,
+              turnStartedAt: true,
+              players: {
+                select: { id: true, role: true, missCount: true },
+              },
+            },
+          });
+
+          if (!liveRoom || liveRoom.status !== 'PLAYING' || !liveRoom.currentTurn || !liveRoom.turnStartedAt) {
+            return;
+          }
+
+          const latestDiff = now.getTime() - liveRoom.turnStartedAt.getTime();
+          if (latestDiff <= timeoutMs) {
+            return;
+          }
+
+          const currentPlayer = liveRoom.players.find((p) => p.role === liveRoom.currentTurn);
+          const opponentRole = liveRoom.currentTurn === 'PLAYER_1' ? 'PLAYER_2' : 'PLAYER_1';
+          const opponent = liveRoom.players.find((p) => p.role === opponentRole);
+          if (!currentPlayer || !opponent) return;
+
+          const updatedPlayer = await tx.playerInRoom.update({
+            where: { id: currentPlayer.id },
+            data: { missCount: currentPlayer.missCount + 1 },
+            select: { missCount: true },
+          });
+
+          if (updatedPlayer.missCount >= 3) {
+            await tx.room.update({
+              where: { id: liveRoom.id },
+              data: {
+                status: 'FINISHED',
+                endReason: 'MISS_LIMIT',
+                winnerRole: opponent.role,
+                finishedAt: now,
+                currentTurn: null,
+              },
+            });
+            return;
+          }
+
+          await tx.room.update({
+            where: { id: liveRoom.id },
+            data: {
+              currentTurn: opponent.role,
+              turnStartedAt: now,
+            },
+          });
+        });
+
+        room = await this.prisma.room.findUnique({
+          where: { code },
+          select: {
+            id: true,
+            code: true,
+            codeLength: true,
+            status: true,
+            currentTurn: true,
+            currentRound: true,
+            turnStartedAt: true,
+            endReason: true,
+            winnerRole: true,
+            players: {
+              select: {
+                id: true,
+                nickname: true,
+                role: true,
+                missCount: true,
+              },
+              orderBy: { createdAt: 'asc' },
+            },
+            guesses: {
+              select: {
+                id: true,
+                playerInRoomId: true,
+                guessValue: true,
+                roundIndex: true,
+                turnIndex: true,
+                correctDigits: true,
+                correctPositions: true,
+                createdAt: true,
+              },
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
+          },
+        });
+      }
+    }
 
     if (!room) {
       throw new NotFoundException('Không tìm thấy phòng');
@@ -274,6 +338,88 @@ export class RoomsService {
       players: response.data.players,
     });
     return response;
+  }
+
+  async startRoom(roomCode: string, playerId: string) {
+    const code = roomCode.trim();
+    if (!code) {
+      throw new BadRequestException('Mã phòng không được để trống');
+    }
+    if (!playerId?.trim()) {
+      throw new BadRequestException('Thiếu playerId');
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const room = await tx.room.findUnique({
+        where: { code },
+        select: {
+          id: true,
+          code: true,
+          codeLength: true,
+          status: true,
+          players: {
+            select: { id: true, role: true, nickname: true, secretCode: true, missCount: true },
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      });
+
+      if (!room) {
+        throw new NotFoundException('Không tìm thấy phòng');
+      }
+
+      if (room.status === 'FINISHED') {
+        throw new BadRequestException('Phòng đã kết thúc');
+      }
+
+      if (room.players.length !== 2) {
+        throw new BadRequestException('Cần đủ 2 người để bắt đầu');
+      }
+
+      if (room.status !== 'WAITING') {
+        throw new BadRequestException('Phòng không ở trạng thái chờ');
+      }
+
+      const me = room.players.find((p) => p.id === playerId);
+      if (!me) {
+        throw new NotFoundException('Không tìm thấy người chơi trong phòng');
+      }
+
+      if (me.role !== 'PLAYER_1') {
+        throw new BadRequestException('Chỉ chủ phòng (PLAYER_1) mới được bắt đầu');
+      }
+
+      const updated = await tx.room.update({
+        where: { id: room.id },
+        data: { status: 'SETTING_SECRET' },
+        select: { status: true },
+      });
+
+      return {
+        message: 'Bắt đầu thành công',
+        data: {
+          room: {
+            code: room.code,
+            codeLength: room.codeLength,
+            status: updated.status,
+          },
+          players: room.players.map((p) => ({
+            id: p.id,
+            nickname: p.nickname,
+            role: p.role,
+            missCount: p.missCount,
+            secretSet: !!p.secretCode,
+          })),
+        },
+      };
+    });
+
+    await this.ablyService.publishRoomEvent(result.data.room.code, 'ROOM_STARTED', {
+      room: result.data.room,
+      players: result.data.players,
+    });
+
+    return result;
   }
 
   async leaveRoom(
@@ -578,7 +724,7 @@ export class RoomsService {
       if (room.turnStartedAt) {
         const now = new Date();
         const diffMs = now.getTime() - room.turnStartedAt.getTime();
-        const timeoutMs = 5 * 60 * 1000;
+        const timeoutMs = 2 * 60 * 1000;
 
         if (diffMs > timeoutMs) {
           const currentPlayer = room.players.find((p) => p.role === room.currentTurn);

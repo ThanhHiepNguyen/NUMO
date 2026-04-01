@@ -1,5 +1,13 @@
 # React + TypeScript + Vite
 
+## Environment
+
+Create `FE/.env.local` (or `FE/.env`) and set:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8000/api/v1
+```
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

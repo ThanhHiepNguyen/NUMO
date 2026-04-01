@@ -23,11 +23,6 @@ export class RoomsController {
     return this.roomsService.joinRoom(code, joinRoomDto.nickname);
   }
 
-  @Get(':code')
-  getByCode(@Param('code') code: string) {
-    return this.roomsService.getRoomByCode(code);
-  }
-
   @Post(':code/leave')
   leave(
     @Param('code') code: string,
@@ -55,6 +50,14 @@ export class RoomsController {
     @Body() guessDto: GuessDto,
   ) {
     return this.roomsService.guess(code, playerId, guessDto.guessValue);
+  }
+
+  @Post(':code/players/:playerId/start')
+  start(
+    @Param('code') code: string,
+    @Param('playerId') playerId: string,
+  ) {
+    return this.roomsService.startRoom(code, playerId);
   }
 
   @Get(':code/state')

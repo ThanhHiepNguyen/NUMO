@@ -166,7 +166,7 @@ export default function GameplayPage() {
                     if (disposed) return;
                     void loadState();
                 });
-            } catch {}
+            } catch { }
         };
 
         void connectRealtime();
@@ -286,7 +286,7 @@ export default function GameplayPage() {
 
     const submitSecret = async () => {
         if (!code) return;
-        if (!routeState.playerId) {
+        if (!effectivePlayerId) {
             setError('Thiếu playerId. Hãy vào lại phòng từ màn hình Join/Create.');
             return;
         }
@@ -312,7 +312,7 @@ export default function GameplayPage() {
         try {
             setSubmittingSecret(true);
             setError('');
-            const res = await setSecret(code, routeState.playerId, normalized);
+            const res = await setSecret(code, effectivePlayerId, normalized);
             setMessage(res?.message || 'Đặt mật mã thành công');
             setMySecretPreview(normalized);
             setSecretValue('');
@@ -326,14 +326,14 @@ export default function GameplayPage() {
 
     const onStart = async () => {
         if (!code) return;
-        if (!routeState.playerId) {
+        if (!effectivePlayerId) {
             setError('Thiếu playerId. Hãy vào lại phòng từ màn hình Join/Create.');
             return;
         }
         try {
             setError('');
             setMessage('');
-            await startRoom(code, routeState.playerId);
+            await startRoom(code, effectivePlayerId);
             await loadState();
         } catch (e: unknown) {
             setError(getErrorMessage(e, 'Không bắt đầu được'));
@@ -597,13 +597,13 @@ export default function GameplayPage() {
                                                 />
                                                 <button
                                                     onClick={() => void submitSecret()}
-                                                    disabled={submittingSecret || !routeState.playerId}
+                                                    disabled={submittingSecret || !effectivePlayerId}
                                                     className="rounded bg-indigo-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
                                                 >
                                                     {submittingSecret ? '...' : 'GỬI'}
                                                 </button>
                                             </div>
-                                            {!routeState.playerId ? (
+                                            {!effectivePlayerId ? (
                                                 <p className="mt-2 text-xs text-amber-300">
                                                     Thiếu playerId, vui lòng vào lại phòng từ Join/Create.
                                                 </p>

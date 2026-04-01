@@ -10,8 +10,20 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1');
 
   app.enableCors({
-    origin: ['http://localhost:5173'],
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      const allowed =
+        origin === 'http://localhost:5173' ||
+        origin === 'https://numo-wheat.vercel.app' ||
+        origin.endsWith('.vercel.app');
+      callback(allowed ? null : new Error('Not allowed by CORS'), allowed);
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   app.use(cookieParser());

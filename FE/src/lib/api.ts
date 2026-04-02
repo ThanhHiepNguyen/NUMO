@@ -117,7 +117,7 @@ export function authMe() {
   return get<AuthMeResponse>('/auth/me');
 }
 
-export function createRoom(payload: { codeLength: number }) {
+export function createRoom(payload: { codeLength: number; maxRounds: number }) {
   return post<CreateRoomResponse>('/rooms', payload);
 }
 

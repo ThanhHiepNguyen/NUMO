@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { PrismaService } from '../../prisma.service';
 import { calculateGuessResult } from '../games/utils/calculateGuessResult';
@@ -59,7 +63,6 @@ export class RoomsService {
       throw new NotFoundException('Không tìm thấy phòng');
     }
 
-
     if (room.status === 'PLAYING' && room.currentTurn && room.turnStartedAt) {
       const now = new Date();
       const diffMs = now.getTime() - room.turnStartedAt.getTime();
@@ -81,7 +84,12 @@ export class RoomsService {
             },
           });
 
-          if (!liveRoom || liveRoom.status !== 'PLAYING' || !liveRoom.currentTurn || !liveRoom.turnStartedAt) {
+          if (
+            !liveRoom ||
+            liveRoom.status !== 'PLAYING' ||
+            !liveRoom.currentTurn ||
+            !liveRoom.turnStartedAt
+          ) {
             return;
           }
 
@@ -90,9 +98,14 @@ export class RoomsService {
             return;
           }
 
-          const currentPlayer = liveRoom.players.find((p) => p.role === liveRoom.currentTurn);
-          const opponentRole = liveRoom.currentTurn === 'PLAYER_1' ? 'PLAYER_2' : 'PLAYER_1';
-          const opponent = liveRoom.players.find((p) => p.role === opponentRole);
+          const currentPlayer = liveRoom.players.find(
+            (p) => p.role === liveRoom.currentTurn,
+          );
+          const opponentRole =
+            liveRoom.currentTurn === 'PLAYER_1' ? 'PLAYER_2' : 'PLAYER_1';
+          const opponent = liveRoom.players.find(
+            (p) => p.role === opponentRole,
+          );
           if (!currentPlayer || !opponent) return;
 
           const updatedPlayer = await tx.playerInRoom.update({
@@ -190,11 +203,18 @@ export class RoomsService {
   }
 
   async createRoom(data: CreateRoomDto, hostId: string, hostUsername?: string) {
-    const code = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+    const code = Math.floor(Math.random() * 1000000)
+      .toString()
+      .padStart(6, '0');
 
     const result = await this.prisma.$transaction(async (tx) => {
       const room = await tx.room.create({
-        data: { code, codeLength: data.codeLength, hostId },
+        data: {
+          code,
+          codeLength: data.codeLength,
+          hostId,
+          maxRounds: data.maxRounds,
+        },
         select: {
           id: true,
           code: true,
@@ -208,7 +228,7 @@ export class RoomsService {
         data: {
           roomId: room.id,
           userId: hostId,
-          nickname: (hostUsername?.trim() || 'host'),
+          nickname: hostUsername?.trim() || 'host',
           role: 'PLAYER_1',
         },
         select: {
@@ -229,7 +249,7 @@ export class RoomsService {
       data: result,
     };
 
-    await this.ablyService.publishRoomEvent(
+    void this.ablyService.publishRoomEvent(
       response.data.room.code,
       'ROOM_CREATED',
       {
@@ -333,10 +353,14 @@ export class RoomsService {
     });
 
     const response = result;
-    await this.ablyService.publishRoomEvent(response.data.room.code, 'PLAYER_JOINED', {
-      player: response.data.player,
-      players: response.data.players,
-    });
+    void this.ablyService.publishRoomEvent(
+      response.data.room.code,
+      'PLAYER_JOINED',
+      {
+        player: response.data.player,
+        players: response.data.players,
+      },
+    );
     return response;
   }
 
@@ -358,7 +382,13 @@ export class RoomsService {
           codeLength: true,
           status: true,
           players: {
-            select: { id: true, role: true, nickname: true, secretCode: true, missCount: true },
+            select: {
+              id: true,
+              role: true,
+              nickname: true,
+              secretCode: true,
+              missCount: true,
+            },
             orderBy: { createdAt: 'asc' },
           },
         },
@@ -386,7 +416,9 @@ export class RoomsService {
       }
 
       if (me.role !== 'PLAYER_1') {
-        throw new BadRequestException('Chỉ chủ phòng (PLAYER_1) mới được bắt đầu');
+        throw new BadRequestException(
+          'Chỉ chủ phòng (PLAYER_1) mới được bắt đầu',
+        );
       }
 
       const updated = await tx.room.update({
@@ -414,10 +446,14 @@ export class RoomsService {
       };
     });
 
-    await this.ablyService.publishRoomEvent(result.data.room.code, 'ROOM_STARTED', {
-      room: result.data.room,
-      players: result.data.players,
-    });
+    void this.ablyService.publishRoomEvent(
+      result.data.room.code,
+      'ROOM_STARTED',
+      {
+        room: result.data.room,
+        players: result.data.players,
+      },
+    );
 
     return result;
   }
@@ -479,10 +515,11 @@ export class RoomsService {
           },
         });
       } else if (remaining.length === 1) {
-        // Avoid "kẹt lượt" khi người đang tới lượt rời phòng.
-        // Khi chỉ còn 1 người, cho phòng quay lại WAITING để chờ đối thủ.
         const remainingPlayerRole = remaining[0].role;
-        if (room.status === 'PLAYING' && room.currentTurn === remainingPlayerRole) {
+        if (
+          room.status === 'PLAYING' &&
+          room.currentTurn === remainingPlayerRole
+        ) {
           await tx.room.update({
             where: { id: room.id },
             data: {
@@ -522,16 +559,24 @@ export class RoomsService {
     });
 
     const response = result;
-    await this.ablyService.publishRoomEvent(response.data.roomCode, 'PLAYER_LEFT', {
-      leftPlayerId: response.data.leftPlayerId,
-      remainingCount: response.data.remainingCount,
-    });
+    void this.ablyService.publishRoomEvent(
+      response.data.roomCode,
+      'PLAYER_LEFT',
+      {
+        leftPlayerId: response.data.leftPlayerId,
+        remainingCount: response.data.remainingCount,
+      },
+    );
 
     if (response.data.remainingCount === 0) {
-      await this.ablyService.publishRoomEvent(response.data.roomCode, 'GAME_FINISHED', {
-        endReason: 'ABANDONED',
-        winnerRole: null,
-      });
+      void this.ablyService.publishRoomEvent(
+        response.data.roomCode,
+        'GAME_FINISHED',
+        {
+          endReason: 'ABANDONED',
+          winnerRole: null,
+        },
+      );
     }
 
     return response;
@@ -582,7 +627,9 @@ export class RoomsService {
       }
 
       if (normalizedSecret.length !== room.codeLength) {
-        throw new BadRequestException(`Mật mã phải có đúng ${room.codeLength} chữ số`);
+        throw new BadRequestException(
+          `Mật mã phải có đúng ${room.codeLength} chữ số`,
+        );
       }
 
       const me = room.players.find((p) => p.id === playerId);
@@ -607,7 +654,8 @@ export class RoomsService {
       });
 
       const hasTwoPlayers = refreshedPlayers.length === 2;
-      const allSecretSet = hasTwoPlayers && refreshedPlayers.every((p) => !!p.secretCode);
+      const allSecretSet =
+        hasTwoPlayers && refreshedPlayers.every((p) => !!p.secretCode);
 
       let nextStatus: string = room.status;
       let currentTurn: string | null = room.currentTurn;
@@ -665,11 +713,15 @@ export class RoomsService {
     });
 
     const response = result;
-    await this.ablyService.publishRoomEvent(response.data.room.code, 'SECRET_SET', {
-      room: response.data.room,
-      me: response.data.me,
-      players: response.data.players,
-    });
+    void this.ablyService.publishRoomEvent(
+      response.data.room.code,
+      'SECRET_SET',
+      {
+        room: response.data.room,
+        me: response.data.me,
+        players: response.data.players,
+      },
+    );
     return response;
   }
 
@@ -691,6 +743,7 @@ export class RoomsService {
           id: true,
           code: true,
           codeLength: true,
+          maxRounds: true,
           status: true,
           currentTurn: true,
           currentRound: true,
@@ -698,7 +751,13 @@ export class RoomsService {
           winnerRole: true,
           turnStartedAt: true,
           players: {
-            select: { id: true, role: true, nickname: true, secretCode: true, missCount: true },
+            select: {
+              id: true,
+              role: true,
+              nickname: true,
+              secretCode: true,
+              missCount: true,
+            },
           },
           guesses: {
             select: { id: true, turnIndex: true },
@@ -727,8 +786,11 @@ export class RoomsService {
         const timeoutMs = 2 * 60 * 1000;
 
         if (diffMs > timeoutMs) {
-          const currentPlayer = room.players.find((p) => p.role === room.currentTurn);
-          const opponentRole = room.currentTurn === 'PLAYER_1' ? 'PLAYER_2' : 'PLAYER_1';
+          const currentPlayer = room.players.find(
+            (p) => p.role === room.currentTurn,
+          );
+          const opponentRole =
+            room.currentTurn === 'PLAYER_1' ? 'PLAYER_2' : 'PLAYER_1';
           const opponent = room.players.find((p) => p.role === opponentRole);
 
           if (currentPlayer && opponent) {
@@ -774,7 +836,9 @@ export class RoomsService {
               },
             });
 
-            throw new BadRequestException('Hết thời gian cho lượt trước, đã chuyển lượt');
+            throw new BadRequestException(
+              'Hết thời gian cho lượt trước, đã chuyển lượt',
+            );
           }
         }
       }
@@ -784,7 +848,9 @@ export class RoomsService {
       }
 
       if (normalizedGuess.length !== room.codeLength) {
-        throw new BadRequestException(`Giá trị đoán phải có đúng ${room.codeLength} chữ số`);
+        throw new BadRequestException(
+          `Giá trị đoán phải có đúng ${room.codeLength} chữ số`,
+        );
       }
 
       const me = room.players.find((p) => p.id === playerId);
@@ -806,7 +872,10 @@ export class RoomsService {
         throw new BadRequestException('Đối thủ chưa nhập mật mã');
       }
 
-      const { correctDigits, correctPositions } = calculateGuessResult(opponent.secretCode, normalizedGuess);
+      const { correctDigits, correctPositions } = calculateGuessResult(
+        opponent.secretCode,
+        normalizedGuess,
+      );
 
       const lastTurnIndex = room.guesses[0]?.turnIndex ?? 0;
       const turnIndex = lastTurnIndex + 1;
@@ -897,19 +966,53 @@ export class RoomsService {
           }
         }
       }
-
-      // Nếu chưa kết thúc game, chuyển lượt / round như cũ
+      //
       const nextTurn = opponentRole;
-      const nextRound = me.role === 'PLAYER_2' ? room.currentRound + 1 : room.currentRound;
+      const nextRound =
+        me.role === 'PLAYER_2' ? room.currentRound + 1 : room.currentRound
+      const maxRounds = room.maxRounds;
+      if (nextRound > maxRounds) {
 
-      // Max rounds tie (basic): nếu đã vượt round tối đa thì hoà
-      if (nextRound > 10) {
+        const p1 = room.players.find((p) => p.role === 'PLAYER_1');
+        const p2 = room.players.find((p) => p.role === 'PLAYER_2');
+
+        const p1Id = p1?.id;
+        const p2Id = p2?.id;
+
+        const [p1LatestGuess, p2LatestGuess] = await Promise.all([
+          p1Id
+            ? tx.guess.findFirst({
+              where: { roomId: room.id, playerInRoomId: p1Id },
+              orderBy: { createdAt: 'desc' },
+              select: { correctDigits: true, correctPositions: true },
+            })
+            : null,
+          p2Id
+            ? tx.guess.findFirst({
+              where: { roomId: room.id, playerInRoomId: p2Id },
+              orderBy: { createdAt: 'desc' },
+              select: { correctDigits: true, correctPositions: true },
+            })
+            : null,
+        ]);
+
+        const p1Digits = p1LatestGuess?.correctDigits ?? 0;
+        const p1Positions = p1LatestGuess?.correctPositions ?? 0;
+        const p2Digits = p2LatestGuess?.correctDigits ?? 0;
+        const p2Positions = p2LatestGuess?.correctPositions ?? 0;
+
+        let winnerRole: 'PLAYER_1' | 'PLAYER_2' | null = null;
+        if (p1Digits > p2Digits) winnerRole = 'PLAYER_1';
+        else if (p2Digits > p1Digits) winnerRole = 'PLAYER_2';
+        else if (p1Positions > p2Positions) winnerRole = 'PLAYER_1';
+        else if (p2Positions > p1Positions) winnerRole = 'PLAYER_2';
+
         const finished = await tx.room.update({
           where: { id: room.id },
           data: {
             status: 'FINISHED',
             endReason: 'MAX_ROUNDS_TIE',
-            winnerRole: null,
+            winnerRole,
             finishedAt: new Date(),
             currentTurn: null,
           },
@@ -955,24 +1058,30 @@ export class RoomsService {
 
     const response = result;
 
-    await this.ablyService.publishRoomEvent(response.data?.room?.code ?? code, 'GUESS_MADE', {
-      result: response.data.result,
-      turnIndex: response.data.turnIndex,
-      roundIndex: response.data.roundIndex,
-      nextTurn: response.data.nextTurn,
-      nextRound: response.data.nextRound,
-    });
+    void this.ablyService.publishRoomEvent(
+      response.data?.room?.code ?? code,
+      'GUESS_MADE',
+      {
+        result: response.data.result,
+        turnIndex: response.data.turnIndex,
+        roundIndex: response.data.roundIndex,
+        nextTurn: response.data.nextTurn,
+        nextRound: response.data.nextRound,
+      },
+    );
 
     if (response.data?.room?.status === 'FINISHED') {
       const finishedRoom = response.data.room;
-      await this.ablyService.publishRoomEvent(finishedRoom.code, 'GAME_FINISHED', {
-        endReason: finishedRoom.endReason,
-        winnerRole: finishedRoom.winnerRole,
-      });
+      void this.ablyService.publishRoomEvent(
+        finishedRoom.code,
+        'GAME_FINISHED',
+        {
+          endReason: finishedRoom.endReason,
+          winnerRole: finishedRoom.winnerRole,
+        },
+      );
     }
 
     return response;
   }
-
-
 }

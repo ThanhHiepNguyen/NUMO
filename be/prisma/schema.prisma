@@ -33,10 +33,11 @@ model Room {
   hostId String
   host   User   @relation("RoomHost", fields: [hostId], references: [id])
   codeLength Int 
+  maxRounds Int 
   status     RoomStatus @default(WAITING)
 
   currentTurn  PlayerRole? // PLAYER_1 / PLAYER_2
-  currentRound Int         @default(1) // 1..10
+  currentRound Int         @default(1)
   turnStartedAt DateTime?
 
   endReason RoomEndReason?

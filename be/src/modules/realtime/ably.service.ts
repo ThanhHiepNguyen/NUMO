@@ -12,7 +12,7 @@ export class AblyService {
             throw new Error('Thiếu ABLY_API_KEY trong môi trường');
         }
 
-        // Use REST client for publishing and token issuing.
+        
         this.rest = new Ably.Rest({ key: apiKey });
     }
 
@@ -28,8 +28,7 @@ export class AblyService {
     }
 
     async getAblyTokenRequest(roomCode: string) {
-        // Restrict token capability to only a single room channel: `room:<roomCode>`
-        // FE will only need to subscribe (and optionally publish) to this channel.
+        
         const normalizedCode = roomCode.trim();
 
         const capability = JSON.stringify({

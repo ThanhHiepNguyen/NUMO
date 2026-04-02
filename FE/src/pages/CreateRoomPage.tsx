@@ -8,6 +8,7 @@ export default function CreateRoomPage() {
     const { isAuthed } = useAuth();
 
     const [codeLength, setCodeLength] = useState(4);
+    const [maxRounds, setMaxRounds] = useState(10);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -25,7 +26,7 @@ export default function CreateRoomPage() {
         setLoading(true);
         setError('');
         try {
-            const res = await createRoom({ codeLength });
+            const res = await createRoom({ codeLength, maxRounds });
             const roomCode = res?.data?.room?.code;
             if (!roomCode) throw new Error('Tạo phòng thành công nhưng thiếu mã phòng');
             const playerId = res?.data?.hostPlayer?.id as string | undefined;
@@ -63,6 +64,20 @@ export default function CreateRoomPage() {
                     value={codeLength}
                     onChange={(e) =>
                         setCodeLength(Math.max(3, Math.min(6, Number(e.target.value) || 4)))
+                    }
+                    className="mt-2 w-full rounded-lg border border-slate-700 bg-[#030B1B] px-3 py-2.5 text-sm outline-none focus:border-cyan-400"
+                />
+
+                <label className="mt-5 block text-xs uppercase tracking-[0.14em] text-slate-500">
+                    Tối đa lượt chơi (1-20)
+                </label>
+                <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={maxRounds}
+                    onChange={(e) =>
+                        setMaxRounds(Math.max(1, Math.min(20, Number(e.target.value) || 10)))
                     }
                     className="mt-2 w-full rounded-lg border border-slate-700 bg-[#030B1B] px-3 py-2.5 text-sm outline-none focus:border-cyan-400"
                 />

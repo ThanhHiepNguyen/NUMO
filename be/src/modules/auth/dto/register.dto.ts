@@ -14,4 +14,6 @@ export class RegisterDto {
     @IsNotEmpty()
     @MinLength(3)
     username!: string;
+
+    
 }

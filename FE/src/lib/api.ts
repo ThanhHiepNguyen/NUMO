@@ -1,67 +1,20 @@
 import axios, { AxiosError } from 'axios';
+import type {
+  UsersMeResponse,
+  CreateRoomResponse,
+  JoinRoomResponse,
+  RoomStateResponse,
+  MessageOnlyResponse,
+  AblyTokenResponse,
+  HistoryResponse,
+  RankResponse,
+} from '../types/api';
+
 
 export const API_BASE =
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
 
-type Role = 'PLAYER_1' | 'PLAYER_2';
 
-type ApiEnvelope<T> = {
-  message: string;
-  data: T;
-};
-
-type AuthMeResponse = ApiEnvelope<{
-  user: {
-    id: string;
-    email?: string;
-    username?: string;
-  };
-}>;
-
-type CreateRoomResponse = ApiEnvelope<{
-  room: { code: string };
-  hostPlayer: { id: string; role: Role };
-}>;
-
-type JoinRoomResponse = ApiEnvelope<{
-  room: { code: string };
-  player: { id: string; role: Role };
-}>;
-
-type RoomStateResponse = ApiEnvelope<{
-  room: {
-    code: string;
-    codeLength: number;
-    status: string;
-    currentTurn: Role | null;
-    currentRound: number;
-    turnStartedAt?: string | null;
-    endReason?: string | null;
-    winnerRole?: Role | null;
-  };
-  players: Array<{
-    id: string;
-    nickname: string;
-    role: Role;
-    missCount: number;
-  }>;
-  lastGuess: {
-    id: string;
-    playerInRoomId: string;
-    guessValue?: string;
-    roundIndex: number;
-    turnIndex: number;
-    correctDigits: number;
-    correctPositions: number;
-    createdAt: string;
-  } | null;
-}>;
-
-type MessageOnlyResponse = { message: string };
-type AblyTokenResponse = ApiEnvelope<{
-  token: string;
-  expires: number;
-}>;
 
 function toErrorMessage(err: unknown) {
   const ax = err as AxiosError<{ message?: unknown }>;
@@ -109,12 +62,32 @@ export function authRegister(payload: {
   return post<MessageOnlyResponse>('/auth/register', payload);
 }
 
+export function authVerifyOtp(payload: { email: string; code: string }) {
+  return post<{ accessToken: string; message: string }>('/auth/verify-otp', payload);
+}
+
+export function authResendOtp(payload: { email: string }) {
+  return post<MessageOnlyResponse>('/auth/resend-otp', payload);
+}
+
 export function authLogout() {
   return post<MessageOnlyResponse>('/auth/logout');
 }
 
-export function authMe() {
-  return get<AuthMeResponse>('/auth/me');
+export function usersMe() {
+  return get<UsersMeResponse>('/users/me');
+}
+
+export function changePassword(payload: { oldPassword: string; newPassword: string }) {
+  return post<MessageOnlyResponse>('/users/change-password', payload);
+}
+
+export function changeUsername(payload: { username: string }) {
+  return post<MessageOnlyResponse>('/users/change-username', payload);
+}
+
+export function getHistory(limit = 10) {
+  return get<HistoryResponse>(`/users/history?limit=${encodeURIComponent(String(limit))}`);
 }
 
 export function createRoom(payload: { codeLength: number; maxRounds: number }) {
@@ -151,4 +124,8 @@ export function leaveRoom(code: string, payload: { playerId: string }) {
 
 export function getAblyToken(code: string) {
   return get<AblyTokenResponse>(`/realtime/ably-token?roomCode=${encodeURIComponent(code)}`);
+}
+
+export function getRank(limit = 20) {
+  return get<RankResponse>(`/users/rank?limit=${encodeURIComponent(String(limit))}`);
 }

@@ -2,7 +2,6 @@ import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/comm
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JoinRoomDto } from './dto/join-room.dto';
 import { LeaveRoomDto } from './dto/leave-room.dto';
 import { SetSecretDto } from './dto/set-secret.dto';
@@ -14,7 +13,8 @@ export class RoomsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() createRoomDto: CreateRoomDto, @CurrentUser() user: { id: string; username?: string }) {
+  create(@Body() createRoomDto: CreateRoomDto, @Req() req: any) {
+    const user = req?.user as { id: string; username?: string };
     return this.roomsService.createRoom(createRoomDto, user.id, user.username);
   }
 

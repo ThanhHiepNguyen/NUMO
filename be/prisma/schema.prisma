@@ -13,6 +13,10 @@ model User {
   email    String @unique
   username String @unique
   password String
+  isVerified Boolean @default(false)
+  verificationCode String?
+  verificationExpiresAt DateTime?
+  lastOtpSentAt DateTime?
 
   // Thống kê tổng quan
   winCount  Int @default(0)

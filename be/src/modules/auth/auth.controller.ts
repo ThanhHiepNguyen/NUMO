@@ -1,11 +1,14 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Res, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import type { Response } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { CurrentUser } from './decorators/current-user.decorator';
 import type { CookieOptions } from 'express';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { ResendOtpDto } from './dto/resend-otp.dto';
+
+
 
 @Controller('auth')
 export class AuthController {
@@ -33,7 +36,9 @@ export class AuthController {
       registerDto.password,
       registerDto.username,
     );
-    res.cookie('accessToken', result.accessToken, this.getAuthCookieOptions());
+    if ((result as any).accessToken) {
+      res.cookie('accessToken', (result as any).accessToken, this.getAuthCookieOptions());
+    }
     return result;
   }
 
@@ -46,6 +51,23 @@ export class AuthController {
     const result = await this.authService.login(loginDto.email, loginDto.password);
     res.cookie('accessToken', result.accessToken, this.getAuthCookieOptions());
     return result;
+  }
+
+  @Post('verify-otp')
+  @HttpCode(HttpStatus.OK)
+  async verifyOtp(
+    @Body() body: VerifyOtpDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.verifyOtp(body.email, body.code);
+    res.cookie('accessToken', result.accessToken, this.getAuthCookieOptions());
+    return result;
+  }
+
+  @Post('resend-otp')
+  @HttpCode(HttpStatus.OK)
+  async resendOtp(@Body() body: ResendOtpDto) {
+    return this.authService.resendOtp(body.email);
   }
 
   @Post('logout')
@@ -61,18 +83,5 @@ export class AuthController {
     return { message: 'Logout thành công' };
   }
 
-  @Get('me')
-  @UseGuards(JwtAuthGuard)
-  async me(@CurrentUser() user: any) {
-    return {
-      message: 'Lấy thông tin user thành công',
-      data: {
-        user: {
-          id: user?.id,
-          email: user?.email,
-          username: user?.username,
-        },
-      },
-    };
-  }
+
 }

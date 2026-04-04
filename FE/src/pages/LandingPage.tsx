@@ -103,24 +103,24 @@ export default function LandingPage() {
     }, [userMenuOpen]);
 
     return (
-        <div className="min-h-screen bg-[#030B1B] px-3 py-3 text-slate-100 sm:px-5">
-            <div className="mx-auto min-h-[95vh] w-full max-w-5xl rounded-2xl border border-indigo-500/35 bg-[#071329] shadow-[0_0_0_1px_rgba(99,102,241,0.18),0_0_40px_rgba(59,130,246,0.10)]">
-                <header className="flex items-center justify-between border-b border-indigo-500/15 px-4 py-3 text-[11px] uppercase tracking-[0.16em] text-slate-500">
-                    <p className="font-semibold text-slate-200">{t.badge}</p>
+        <div className="min-h-screen bg-linear-to-b from-[#99F6E4] via-[#CFFAF3] to-white px-3 py-3 text-slate-800 sm:px-5">
+            <div className="mx-auto min-h-[95vh] w-full max-w-5xl rounded-2xl border border-teal-200/60 bg-white/90 backdrop-blur supports-backdrop-filter:bg-white/75 shadow-[0_0_0_1px_rgba(13,148,136,0.18),0_10px_50px_rgba(2,132,199,0.10)]">
+                <header className="flex items-center justify-between border-b border-teal-200/60 px-4 py-3 text-[11px] uppercase tracking-[0.16em] text-slate-500">
+                    <p className="font-semibold text-slate-700">{t.badge}</p>
                     <div className="hidden items-center gap-6 md:flex">
-                        <button className="text-indigo-300">{t.navBattle}</button>
-                        <button className="hover:text-slate-200">{t.navRank}</button>
+                        <button className="text-teal-700">{t.navBattle}</button>
+                        <button className="hover:text-slate-700" onClick={() => nav('/rank')}>{t.navRank}</button>
                     </div>
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setLang('en')}
-                            className={`rounded px-1.5 py-0.5 normal-case ${lang === 'en' ? 'text-slate-200' : 'text-slate-600 hover:text-slate-300'}`}
+                            className={`rounded px-1.5 py-0.5 normal-case ${lang === 'en' ? 'text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             EN
                         </button>
                         <button
                             onClick={() => setLang('vi')}
-                            className={`rounded px-1.5 py-0.5 normal-case ${lang === 'vi' ? 'text-slate-200' : 'text-slate-600 hover:text-slate-300'}`}
+                            className={`rounded px-1.5 py-0.5 normal-case ${lang === 'vi' ? 'text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             VI
                         </button>
@@ -135,11 +135,11 @@ export default function LandingPage() {
                                     }
                                     setUserMenuOpen((v) => !v);
                                 }}
-                                className="inline-flex items-center gap-1.5 rounded-md border border-slate-800/70 bg-[#030B1B]/30 px-2 py-1 text-[10px] font-bold tracking-[0.16em] text-slate-200 hover:border-slate-600"
+                                className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white/70 px-2 py-1 text-[10px] font-bold tracking-[0.16em] text-slate-700 hover:border-slate-400 hover:bg-white"
                                 title={isAuthed ? (displayName || 'Account') : 'Login'}
                             >
-                                <UserCircle2 className={`h-4 w-4 ${isAuthed ? 'text-emerald-300' : 'text-slate-300'}`} />
-                                <ChevronDown className={`h-3.5 w-3.5 text-slate-500 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                                <UserCircle2 className={`h-4 w-4 ${isAuthed ? 'text-teal-600' : 'text-slate-500'}`} />
+                                <ChevronDown className={`h-3.5 w-3.5 text-slate-600 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                             </button>
 
                             {userMenuOpen ? (
@@ -154,35 +154,37 @@ export default function LandingPage() {
                                     </div>
 
                                     <div className="p-1">
-                                        <a
-                                            href="#"
-                                            onClick={(e) => e.preventDefault()}
-                                            aria-disabled="true"
-                                            className="flex w-full cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400/80"
+                                        <button
+                                            onClick={() => { setUserMenuOpen(false); nav('/account'); }}
+                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-700/20"
                                         >
-                                            <UserCircle2 className="h-4 w-4 text-slate-400" />
+                                            <UserCircle2 className="h-4 w-4 text-slate-300" />
                                             Thông tin tài khoản
-                                        </a>
+                                        </button>
 
-                                        <a
-                                            href="#"
-                                            onClick={(e) => e.preventDefault()}
-                                            aria-disabled="true"
-                                            className="flex w-full cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400/80"
+                                        <button
+                                            onClick={() => { setUserMenuOpen(false); nav('/rank'); }}
+                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-700/20"
                                         >
-                                            <KeyRound className="h-4 w-4 text-slate-400" />
+                                            <ShieldCheck className="h-4 w-4 text-slate-300" />
+                                            Xếp hạng
+                                        </button>
+
+                                        <button
+                                            onClick={() => { setUserMenuOpen(false); nav('/account/change-password'); }}
+                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-700/20"
+                                        >
+                                            <KeyRound className="h-4 w-4 text-slate-300" />
                                             Đổi mật khẩu
-                                        </a>
+                                        </button>
 
-                                        <a
-                                            href="#"
-                                            onClick={(e) => e.preventDefault()}
-                                            aria-disabled="true"
-                                            className="flex w-full cursor-not-allowed items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400/80"
+                                        <button
+                                            onClick={() => { setUserMenuOpen(false); nav('/history'); }}
+                                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-700/20"
                                         >
-                                            <History className="h-4 w-4 text-slate-400" />
+                                            <History className="h-4 w-4 text-slate-300" />
                                             Lịch sử
-                                        </a>
+                                        </button>
 
                                         <div className="my-1 h-px bg-slate-800/80" />
 
@@ -210,25 +212,25 @@ export default function LandingPage() {
                 <main className="px-5 pb-6 pt-10 md:px-12">
                     <section className="text-center">
                         <h1 className="text-4xl font-black tracking-tight sm:text-6xl">
-                            <span className="text-slate-100">{t.heroTitleA} </span>
-                            <span className="bg-gradient-to-r from-slate-200 via-indigo-200 to-cyan-200 bg-clip-text text-transparent">
+                            <span className="text-slate-900">{t.heroTitleA} </span>
+                            <span className="bg-linear-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
                                 {t.heroTitleB}
                             </span>
                         </h1>
-                        <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-300/80">
+                        <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-600">
                             {t.heroDesc}
                         </p>
                         <div className="mx-auto mt-8 grid max-w-lg grid-cols-1 gap-3 sm:grid-cols-2">
                             <button
                                 onClick={() => nav('/create')}
-                                className="inline-flex items-center justify-center gap-2 rounded-sm border border-indigo-300/25 bg-gradient-to-r from-indigo-600/90 to-blue-600/90 px-5 py-3 text-xs font-bold tracking-[0.18em] text-white transition-all hover:brightness-110 active:scale-[0.98]"
+                                className="inline-flex items-center justify-center gap-2 rounded-sm border border-teal-200/60 bg-linear-to-r from-teal-500 to-cyan-500 px-5 py-3 text-xs font-bold tracking-[0.18em] text-white transition-all hover:brightness-110 active:scale-[0.98]"
                             >
                                 <ShieldCheck className="h-4 w-4" />
                                 {t.createRoom}
                             </button>
                             <button
                                 onClick={() => nav('/join')}
-                                className="inline-flex items-center justify-center gap-2 rounded-sm border border-slate-700/70 bg-transparent px-5 py-3 text-xs font-bold tracking-[0.18em] text-slate-200 transition-all hover:border-slate-500 hover:text-white active:scale-[0.98]"
+                                className="inline-flex items-center justify-center gap-2 rounded-sm border border-slate-300 bg-transparent px-5 py-3 text-xs font-bold tracking-[0.18em] text-slate-700 transition-all hover:border-slate-400 hover:text-slate-900 active:scale-[0.98]"
                             >
                                 <LogIn className="h-4 w-4" />
                                 {t.enterRoom}
@@ -236,24 +238,24 @@ export default function LandingPage() {
                         </div>
                     </section>
 
-                    <section className="mt-10 grid grid-cols-1 overflow-hidden border border-slate-800/60 bg-[#09172E]/70 md:grid-cols-2">
-                        <div className="border-b border-slate-700/50 px-6 py-5 md:border-b-0 md:border-r">
+                    <section className="mt-10 grid grid-cols-1 overflow-hidden border border-slate-200/80 bg-white/50 md:grid-cols-2">
+                        <div className="border-b border-slate-200 px-6 py-5 md:border-b-0 md:border-r">
                             <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
                                 {t.globalWinRate}
                             </p>
-                            <p className="mt-3 text-4xl font-bold text-emerald-300">86.68%</p>
+                            <p className="mt-3 text-4xl font-bold text-emerald-600">86.68%</p>
                         </div>
                         <div className="px-6 py-5">
                             <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
                                 {t.activePlayers}
                             </p>
-                            <p className="mt-3 text-4xl font-bold text-slate-100">1,204</p>
+                            <p className="mt-3 text-4xl font-bold text-slate-800">1,204</p>
                         </div>
                     </section>
 
                     <section className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-2">
                         <div>
-                            <h2 className="mb-5 text-sm font-bold uppercase tracking-[0.2em] text-slate-200">
+                            <h2 className="mb-5 text-sm font-bold uppercase tracking-[0.2em] text-slate-900">
                                 {t.howToPlay}
                             </h2>
                             <div className="space-y-5">
@@ -261,15 +263,15 @@ export default function LandingPage() {
                                     const Icon = item.icon;
                                     return (
                                         <article key={item.step} className="grid grid-cols-[26px_1fr] gap-4">
-                                            <p className="pt-0.5 text-xl font-bold text-slate-600">{item.step}</p>
+                                            <p className="pt-0.5 text-xl font-bold text-slate-400">{item.step}</p>
                                             <div>
-                                                <div className="mb-2 inline-flex rounded-md border border-slate-700/70 bg-slate-900/30 p-2 text-slate-200">
+                                                <div className="mb-2 inline-flex rounded-md border border-slate-200/80 bg-white/70 p-2 text-slate-800">
                                                     <Icon className="h-4 w-4" />
                                                 </div>
-                                                <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-100">
+                                                <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-900">
                                                     {item.title}
                                                 </h3>
-                                                <p className="mt-2 text-xs leading-5 text-slate-400/80">{item.desc}</p>
+                                                <p className="mt-2 text-xs leading-5 text-slate-600">{item.desc}</p>
                                             </div>
                                         </article>
                                     );
@@ -278,31 +280,31 @@ export default function LandingPage() {
                         </div>
 
                         <div>
-                            <h2 className="mb-5 text-sm font-bold uppercase tracking-[0.2em] text-slate-200">
+                            <h2 className="mb-5 text-sm font-bold uppercase tracking-[0.2em] text-slate-900">
                                 {t.scoringSystem}
                             </h2>
                             <div className="space-y-3">
-                                <div className="rounded-md border border-slate-800/70 bg-[#0A1A34]/60 p-4">
+                                <div className="rounded-md border border-slate-200/80 bg-white/70 p-4">
                                     <div className="flex items-center justify-between">
-                                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-200">
+                                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-900">
                                             {t.bulls}
                                         </p>
-                                        <span className="h-3 w-3 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.45)]" />
+                                        <span className="h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.35)]" />
                                     </div>
-                                    <p className="mt-2 text-xs text-slate-500">{t.bullsDesc}</p>
+                                    <p className="mt-2 text-xs text-slate-600">{t.bullsDesc}</p>
                                 </div>
-                                <div className="rounded-md border border-slate-800/70 bg-[#0A1A34]/60 p-4">
+                                <div className="rounded-md border border-slate-200/80 bg-white/70 p-4">
                                     <div className="flex items-center justify-between">
-                                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-200">
+                                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-900">
                                             {t.cows}
                                         </p>
-                                        <span className="h-3 w-3 rounded-full bg-amber-200 shadow-[0_0_10px_rgba(252,211,77,0.45)]" />
+                                        <span className="h-3 w-3 rounded-full bg-amber-300 shadow-[0_0_10px_rgba(252,211,77,0.35)]" />
                                     </div>
-                                    <p className="mt-2 text-xs text-slate-500">{t.cowsDesc}</p>
+                                    <p className="mt-2 text-xs text-slate-600">{t.cowsDesc}</p>
                                 </div>
-                                <div className="rounded-md border border-slate-800/70 bg-slate-900/30 p-4 text-xs text-slate-200">
-                                    <p className="font-bold uppercase tracking-[0.16em] text-slate-100">{t.tacticalNote}</p>
-                                    <p className="mt-2 leading-5 text-slate-400/80">{t.tacticalDesc}</p>
+                                <div className="rounded-md border border-slate-200/80 bg-white/60 p-4 text-xs text-slate-700">
+                                    <p className="font-bold uppercase tracking-[0.16em] text-slate-900">{t.tacticalNote}</p>
+                                    <p className="mt-2 leading-5 text-slate-600">{t.tacticalDesc}</p>
                                 </div>
                             </div>
                         </div>

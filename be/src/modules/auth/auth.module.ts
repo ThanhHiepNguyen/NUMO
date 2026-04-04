@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaModule } from '../../prisma.module';
+import { MailerService } from '../../common/mailer.service';
 
 @Module({
   imports: [
@@ -12,12 +13,11 @@ import { PrismaModule } from '../../prisma.module';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET as string,
-      // JWT standard accepts duration strings like "7d" (jsonwebtoken).
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN as any },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, MailerService],
   exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}
